@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Kanairo AI</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%23E8A33D'/%3E%3Cline x1='7' y1='4' x2='7' y2='20' stroke='%230E0E10' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='7' y1='12' x2='18' y2='4' stroke='%230E0E10' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='7' y1='12' x2='18' y2='20' stroke='%230E0E10' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0E0E10;
+    --bg-elevated:#1D1D20;
+    --bg-elevated-2:#2A2A2E;
+    --text:#ECECEC;
+    --text-dim:#93939B;
+    --border:#2A2A2E;
+    --accent:#E8A33D;
+    --accent-deep:#C9832A;
+    --accent-rgb:232,163,61;
+    --model-color:#FF5A3C;
+    --model-color-rgb:255,90,60;
+    --danger:#C0392B;
+    --font-display:'Space Grotesk',sans-serif;
+    --font-body:'Inter',sans-serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  button{font-family:inherit; cursor:pointer;}
+
+  /* ---------- topbar ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:16px 22px;
+    flex-shrink:0;
+  }
+  .brand-wrap{position:relative;}
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:0.03em;
+    color:var(--text);
+    background:none;
+    border:none;
+    padding:8px 10px;
+    border-radius:10px;
+  }
+  .brand:hover{background:var(--bg-elevated);}
+  .brand .logo-mark{
+    width:22px; height:22px; border-radius:6px;
+    box-shadow:0 0 10px rgba(var(--accent-rgb),0.45);
+    flex-shrink:0;
+  }
+  .brand .model-tag{
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:11.5px;
+    letter-spacing:0.02em;
+    color:var(--accent);
+    background:rgba(var(--accent-rgb),0.14);
+    padding:3px 8px;
+    border-radius:999px;
+  }
+  .brand .chevron{width:14px; height:14px; color:var(--text-dim);}
+  .model-dropdown{
+    position:absolute;
+    top:calc(100% + 8px);
+    left:0;
+    width:280px;
+    background:var(--bg-elevated);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:6px;
+    z-index:40;
+    box-shadow:0 18px 40px -12px rgba(0,0,0,0.6);
+  }
+  .model-option{
+    padding:10px 12px;
+    border-radius:10px;
+  }
+  .model-option:hover{background:var(--bg-elevated-2);}
+  .model-option.active{background:rgba(var(--accent-rgb),0.1);}
+  .mo-top{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .mo-name{font-size:14px; font-weight:600; color:var(--text);}
+  .mo-price{font-size:12.5px; color:var(--accent); font-weight:600;}
+  .mo-desc{font-size:12px; color:var(--text-dim); margin-top:3px; line-height:1.4;}
+  .model-dropdown-note{
+    margin-top:4px; padding:10px 12px 6px;
+    border-top:1px solid var(--border);
+    font-size:11.5px; color:var(--text-dim); line-height:1.5;
+  }
+  .model-dropdown-note button{
+    background:none; border:none; color:var(--accent);
+    font-size:11.5px; font-weight:600; padding:0; text-decoration:underline;
+  }
+  .quota-tag{
+    font-family:var(--font-body); font-weight:500; font-size:11px;
+    color:var(--text-dim); background:var(--bg-elevated-2);
+    padding:3px 8px; border-radius:999px;
+  }
+  .modal-sub{font-size:13px; color:var(--text-dim); margin-bottom:16px; line-height:1.5;}
+  .weekend-banner{
+    font-size:12.5px; font-weight:600; color:var(--accent);
+    background:rgba(var(--accent-rgb),0.12);
+    border:1px solid rgba(var(--accent-rgb),0.3);
+    border-radius:10px; padding:8px 12px; margin:-6px 0 16px;
+  }
+  .pprice-wrap{display:flex; align-items:baseline; gap:8px; margin-left:14px; white-space:nowrap;}
+  .pprice-old{font-size:13px; color:var(--text-dim); text-decoration:line-through;}
+  .plan-row.active-plan{border-color:var(--accent);}
+
+  .hero-sub{
+    font-size:14px;
+    color:var(--text-dim);
+    max-width:460px;
+    margin:0 auto;
+    line-height:1.55;
+  }
+  .hero-sub strong{color:var(--accent); font-weight:600;}
+  .top-actions{display:flex; align-items:center; gap:8px;}
+  .upgrade-link{
+    display:flex; align-items:center; gap:6px;
+    background:none; border:none;
+    color:var(--accent);
+    font-size:14px; font-weight:600;
+    padding:8px 10px; border-radius:8px;
+  }
+  .upgrade-link:hover{background:var(--bg-elevated);}
+  .icon-btn{
+    width:36px; height:36px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:none; border:none; color:var(--text-dim);
+  }
+  .icon-btn:hover{background:var(--bg-elevated); color:var(--text);}
+  .icon-btn svg{width:19px; height:19px;}
+
+  /* ---------- stage ---------- */
+  .stage{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    padding:0 20px;
+    position:relative;
+  }
+  .hero{
+    text-align:center;
+    max-width:640px;
+    width:100%;
+  }
+  .hero h1{
+    font-size:clamp(22px,4vw,30px);
+    font-weight:500;
+    color:var(--text);
+    margin-bottom:26px;
+  }
+  body.chat-active .hero{display:none;}
+
+  .chat-log{
+    display:none;
+    flex-direction:column;
+    gap:18px;
+    width:100%;
+    max-width:720px;
+    margin:0 auto;
+    padding:22px 4px 24px;
+    overflow-y:auto;
+    flex:1;
+    scrollbar-width:thin;
+  }
+  body.chat-active .stage{justify-content:flex-start; align-items:stretch;}
+  body.chat-active .chat-log{display:flex;}
+
+  .msg{
+    max-width:78%;
+    padding:12px 16px;
+    border-radius:18px;
+    font-size:15px;
+    line-height:1.55;
+    white-space:pre-wrap;
+    word-wrap:break-word;
+  }
+  .msg.user{
+    align-self:flex-end;
+    background:var(--accent);
+    color:#1B1400;
+    border-bottom-right-radius:5px;
+  }
+  .msg.assistant{
+    align-self:flex-start;
+    background:var(--bg-elevated);
+    color:var(--text);
+    border-bottom-left-radius:5px;
+  }
+  .msg.typing{
+    align-self:flex-start;
+    background:var(--bg-elevated);
+    color:var(--text-dim);
+    display:flex; align-items:center; gap:5px;
+  }
+  .typing-dot{
+    width:6px; height:6px; border-radius:50%;
+    background:var(--text-dim);
+    animation:blink 1.2s infinite ease-in-out;
+  }
+  .typing-dot:nth-child(2){animation-delay:0.2s;}
+  .typing-dot:nth-child(3){animation-delay:0.4s;}
+  @keyframes blink{0%,80%,100%{opacity:0.25;} 40%{opacity:1;}}
+
+  .msg-row{
+    display:flex;
+    align-items:flex-end;
+    gap:9px;
+    align-self:flex-start;
+    max-width:88%;
+  }
+  .msg-avatar{
+    width:24px; height:24px; border-radius:7px;
+    flex-shrink:0; margin-bottom:2px;
+    box-shadow:0 0 8px rgba(var(--accent-rgb),0.4);
+  }
+  .msg-row .msg.assistant{max-width:100%;}
+
+  .msg-text{white-space:pre-wrap; word-wrap:break-word;}
+  .msg-text + .code-block, .code-block + .msg-text{margin-top:10px;}
+
+  .code-block{
+    background:#0A0A0B;
+    border:1px solid var(--border);
+    border-radius:10px;
+    overflow:hidden;
+    margin:4px 0;
+    max-width:100%;
+  }
+  .code-block-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:7px 8px 7px 14px;
+    background:#151517;
+    border-bottom:1px solid var(--border);
+  }
+  .code-lang{
+    font-size:11.5px; color:var(--text-dim);
+    letter-spacing:0.03em; text-transform:lowercase;
+  }
+  .copy-btn{
+    display:flex; align-items:center; gap:5px;
+    background:none; border:none; color:var(--text-dim);
+    font-size:12px; padding:5px 9px; border-radius:7px;
+  }
+  .copy-btn:hover{background:var(--bg-elevated-2); color:var(--text);}
+  .copy-btn.copied{color:#4ADE80;}
+  .copy-btn svg{width:13px; height:13px; flex-shrink:0;}
+  .code-block pre{margin:0; padding:14px 16px; overflow-x:auto;}
+  .code-block code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:13px; line-height:1.55; color:#E4E4E7; white-space:pre;
+  }
+  .logo-mark rect, .msg-avatar rect{fill:var(--accent); transition:fill .3s ease;}
+  .brand .model-tag, .msg.user, .voice-orb, .orb-sm, .plan-row.featured,
+  .model-option.active, .hero-sub strong, .mo-price, .upgrade-link, .code-lang{
+    transition:background-color .3s ease, border-color .3s ease, color .3s ease;
+  }
+  .gen-image{max-width:100%; border-radius:12px; display:block;}
+  .gen-caption{margin-top:8px; font-size:12.5px; color:var(--text-dim);}
+  .img-skeleton{display:flex; gap:5px; align-items:center; padding:4px 2px;}
+  .msg-attachment{
+    font-size:12px;
+    color:var(--text-dim);
+    margin-bottom:6px;
+    display:flex;
+    align-items:center;
+    gap:5px;
+  }
+  .msg img.att-img{max-width:220px; border-radius:10px; display:block; margin-bottom:8px;}
+
+  /* ---------- composer area ---------- */
+  .bottom-area{
+    width:100%;
+    max-width:720px;
+    margin:0 auto;
+    padding:0 20px 26px;
+    flex-shrink:0;
+  }
+  .attachment-chip{
+    display:inline-flex; align-items:center; gap:7px;
+    background:var(--bg-elevated);
+    border:1px solid var(--border);
+    padding:6px 10px 6px 12px;
+    border-radius:10px;
+    font-size:12.5px;
+    color:var(--text-dim);
+    margin-bottom:10px;
+  }
+  .attachment-chip button{background:none;border:none;color:var(--text-dim);display:flex;align-items:center;}
+  .attachment-chip button:hover{color:var(--text);}
+  .attachment-chip svg{width:13px;height:13px;}
+
+  .composer{
+    display:flex;
+    align-items:flex-end;
+    gap:6px;
+    background:var(--bg-elevated);
+    border:1px solid var(--border);
+    border-radius:28px;
+    padding:8px 8px 8px 16px;
+  }
+  .composer textarea{
+    flex:1;
+    background:none;
+    border:none;
+    outline:none;
+    resize:none;
+    color:var(--text);
+    font-size:15px;
+    font-family:inherit;
+    max-height:160px;
+    min-height:24px;
+    line-height:1.45;
+    padding:7px 0;
+  }
+  .composer textarea::placeholder{color:var(--text-dim);}
+
+  .icon-round{
+    width:38px; height:38px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    border:none; flex-shrink:0; transition:background 0.15s, color 0.15s;
+  }
+  .icon-round svg{width:18px; height:18px;}
+  .icon-round.plain{background:none; color:var(--text-dim);}
+  .icon-round.plain:hover{background:var(--bg-elevated-2); color:var(--text);}
+  .icon-round.primary{background:var(--text); color:var(--bg);}
+  .icon-round.primary:hover{background:#fff;}
+  .icon-round.listening{background:var(--danger); color:#fff; animation:pulse 1.1s infinite;}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,0.5);} 70%{box-shadow:0 0 0 9px rgba(192,57,43,0);} 100%{box-shadow:0 0 0 0 rgba(192,57,43,0);}}
+
+  .quick-actions{
+    display:flex;
+    flex-direction:column;
+    gap:1px;
+    margin-top:22px;
+    align-items:flex-start;
+  }
+  .quick-action{
+    display:flex; align-items:center; gap:12px;
+    background:none; border:none;
+    color:var(--text-dim); font-size:15px;
+    padding:9px 8px; border-radius:9px;
+  }
+  .quick-action:hover{color:var(--text); background:var(--bg-elevated);}
+  .quick-action svg{width:19px; height:19px; flex-shrink:0;}
+  body.chat-active .quick-actions{display:none;}
+
+  .voice-banner{
+    margin-top:26px;
+    width:100%;
+    background:var(--bg-elevated);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:14px 16px 14px 14px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+  .voice-banner .orb-sm{
+    width:38px; height:38px; border-radius:50%; flex-shrink:0;
+    background:radial-gradient(circle at 35% 30%, #fff, var(--accent) 55%, var(--accent-deep) 100%);
+  }
+  .voice-banner .info{flex:1; min-width:0;}
+  .voice-banner .info strong{display:block; font-size:14px; color:var(--text); font-weight:600;}
+  .voice-banner .info span{font-size:12.5px; color:var(--text-dim); display:block; margin-top:2px;}
+  .voice-banner .start-btn{
+    background:#fff; color:#111; border:none; border-radius:999px;
+    padding:9px 16px; font-size:13px; font-weight:600; flex-shrink:0;
+  }
+  .voice-banner .start-btn:hover{background:#e6e6e6;}
+  .voice-banner .close-btn{
+    background:none; border:none; color:var(--text-dim); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    width:28px; height:28px; border-radius:50%;
+  }
+  .voice-banner .close-btn:hover{background:var(--bg-elevated-2); color:var(--text);}
+  .voice-banner .close-btn svg{width:15px; height:15px;}
+  body.chat-active .voice-banner{display:none;}
+
+  /* ---------- voice overlay ---------- */
+  .voice-overlay{
+    position:fixed; inset:0; background:var(--bg); z-index:60;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:26px;
+  }
+  .voice-overlay[hidden]{display:none;}
+  .voice-orb{
+    width:130px; height:130px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #fff, var(--accent) 55%, var(--accent-deep) 100%);
+    animation:breathe 2.6s ease-in-out infinite;
+  }
+  .voice-orb.listening{animation:breathe 1.1s ease-in-out infinite;}
+  @keyframes breathe{0%,100%{transform:scale(1); opacity:0.92;} 50%{transform:scale(1.09); opacity:1;}}
+  .voice-status{color:var(--text-dim); font-size:15px; min-height:20px;}
+  .voice-transcript{color:var(--text); font-size:16px; max-width:520px; text-align:center; min-height:24px; padding:0 20px;}
+  .voice-stop{
+    width:54px; height:54px; border-radius:50%;
+    background:var(--bg-elevated); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center; color:var(--text);
+  }
+  .voice-stop:hover{background:var(--bg-elevated-2);}
+  .voice-stop svg{width:18px; height:18px;}
+
+  /* ---------- upgrade modal ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:70;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .modal-overlay[hidden]{display:none;}
+  .modal{
+    background:var(--bg-elevated); border:1px solid var(--border);
+    border-radius:18px; padding:28px; max-width:520px; width:100%;
+    max-height:86vh; overflow-y:auto;
+  }
+  .modal-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;}
+  .modal-head h2{font-family:var(--font-display); font-size:20px; font-weight:700;}
+  .plan-row{
+    display:flex; align-items:center; justify-content:space-between;
+    border:1px solid var(--border); border-radius:12px;
+    padding:16px 18px; margin-bottom:12px;
+  }
+  .plan-row.featured{border-color:var(--accent); background:rgba(var(--accent-rgb),0.06);}
+  .plan-row .pname{font-weight:600; font-size:14.5px;}
+  .plan-row .pdesc{font-size:12.5px; color:var(--text-dim); margin-top:3px;}
+  .plan-row .pprice{font-family:var(--font-display); font-weight:700; font-size:18px; white-space:nowrap; margin-left:14px;}
+
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--bg-elevated-2); border-radius:8px;}
+
+  @media(prefers-reduced-motion: reduce){
+    *{animation:none !important; transition:none !important;}
+  }
+  @media(max-width:520px){
+    .msg{max-width:88%;}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand-wrap">
+    <button class="brand" id="modelSwitchBtn" aria-haspopup="true" aria-expanded="false">
+      <svg class="logo-mark" viewBox="0 0 24 24" aria-hidden="true">
+        <rect width="24" height="24" rx="6" fill="#E8A33D"/>
+        <line x1="7" y1="4" x2="7" y2="20" stroke="#0E0E10" stroke-width="2.4" stroke-linecap="round"/>
+        <line x1="7" y1="12" x2="18" y2="4" stroke="#0E0E10" stroke-width="2.4" stroke-linecap="round"/>
+        <line x1="7" y1="12" x2="18" y2="20" stroke="#0E0E10" stroke-width="2.4" stroke-linecap="round"/>
+      </svg>
+      KANAIRO AI
+      <span class="model-tag" id="modelTag">RAPTOR 1</span>
+      <span class="quota-tag" id="quotaTag">Unlimited</span>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <div class="model-dropdown" id="modelDropdown" hidden>
+      <div class="model-option" data-model="vito05">
+        <div class="mo-top"><span class="mo-name">VITO 0.5</span><span class="mo-price">∞ prompts</span></div>
+        <div class="mo-desc">The lightest, fastest model — unlimited, always free</div>
+      </div>
+      <div class="model-option" data-model="vito1">
+        <div class="mo-top"><span class="mo-name">VITO 1</span><span class="mo-price">50 / 4 days</span></div>
+        <div class="mo-desc">Balanced everyday answers</div>
+      </div>
+      <div class="model-option" data-model="vito2">
+        <div class="mo-top"><span class="mo-name">VITO 2</span><span class="mo-price">50 / 4 days</span></div>
+        <div class="mo-desc">The strongest VITO model — dependable and thorough</div>
+      </div>
+      <div class="model-option" data-model="raptor05">
+        <div class="mo-top"><span class="mo-name">RAPTOR 0.5</span><span class="mo-price">50 / 4 days</span></div>
+        <div class="mo-desc">Real reasoning power for harder problems</div>
+      </div>
+      <div class="model-option" data-model="raptor1">
+        <div class="mo-top"><span class="mo-name">RAPTOR 1</span><span class="mo-price">50 / 4 days</span></div>
+        <div class="mo-desc">Flagship. Full-depth reasoning for the hardest work</div>
+      </div>
+      <div class="model-dropdown-note">Free plan: 50 prompts / 4 days on all models except VITO 0.5. <button id="dropdownUpgradeLink" type="button">Buy Lite, Pro, or Max</button> for unlimited.</div>
+    </div>
+  </div>
+  <div class="top-actions">
+    <button class="upgrade-link" id="upgradeBtn">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.8 5.6L19 9l-5.2 1.4L12 16l-1.8-5.6L5 9l5.2-1.4L12 2z"/></svg>
+      <span id="upgradeLabel">Upgrade</span>
+    </button>
+    <button class="icon-btn" id="newChatBtn" title="New chat" aria-label="New chat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="stage">
+  <div class="hero" id="hero">
+    <h1>Where should we begin?</h1>
+    <p class="hero-sub">Running <strong id="heroModelName">Kanairo Max</strong> — built for the hard stuff: multi-step reasoning, real codebases, dense research, and real image generation, not just text about it.</p>
+  </div>
+  <div class="chat-log" id="chatLog"></div>
+</main>
+
+<div class="bottom-area">
+  <div id="attachmentZone"></div>
+
+  <div class="composer">
+    <input type="file" id="fileInput" hidden accept=".txt,.md,.csv,.json,image/*">
+    <button class="icon-round plain" id="attachBtn" title="Attach" aria-label="Attach a file">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+    <textarea id="input" rows="1" placeholder="Ask anything" aria-label="Message Kanairo"></textarea>
+    <button class="icon-round plain" id="micBtn" title="Dictate" aria-label="Dictate">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+    </button>
+    <button class="icon-round primary" id="sendVoiceBtn" title="Send" aria-label="Send message">
+      <svg id="sendVoiceIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h3M9 6v12M13 4v16M17 8v8M20 10v4"/></svg>
+    </button>
+  </div>
+
+  <div class="quick-actions" id="quickActions">
+    <button class="quick-action" data-mode="image" data-prompt="">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      Create an image
+    </button>
+    <button class="quick-action" data-prompt="Help me write or edit: ">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+      Write or edit
+    </button>
+    <button class="quick-action" data-prompt="Look this up and give me a clear answer: ">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 2.5 15.4 0 18M12 3c-2.5 2.6-2.5 15.4 0 18"/></svg>
+      Look something up
+    </button>
+    <button class="quick-action" data-mode="video" data-prompt="">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="14" rx="2"/><path d="m17 9 4-2v10l-4-2"/></svg>
+      Create a video
+    </button>
+  </div>
+
+  <div class="voice-banner" id="voiceBanner">
+    <div class="orb-sm"></div>
+    <div class="info">
+      <strong>Meet Kanairo Voice</strong>
+      <span>Talk it through out loud — Kanairo listens and answers back.</span>
+    </div>
+    <button class="start-btn" id="startVoiceBtn">Start Voice</button>
+    <button class="close-btn" id="closeBannerBtn" aria-label="Dismiss">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- voice mode overlay -->
+<div class="voice-overlay" id="voiceOverlay" hidden>
+  <div class="voice-orb" id="voiceOrb"></div>
+  <div class="voice-status" id="voiceStatus">Listening…</div>
+  <div class="voice-transcript" id="voiceTranscript"></div>
+  <button class="voice-stop" id="voiceStopBtn" aria-label="End voice mode">
+    <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+  </button>
+</div>
+
+<!-- upgrade modal -->
+<div class="modal-overlay" id="upgradeModal" hidden>
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Kanairo Plans</h2>
+      <button class="icon-btn" id="closeModalBtn" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <p class="modal-sub">Every model is free up to 50 prompts per 4 days (VITO 0.5 is always unlimited). A plan removes that limit everywhere.</p>
+    <p class="weekend-banner" id="weekendBanner" hidden>🎉 Weekend deal — 25% off every plan, today only.</p>
+    <div class="plan-row" data-plan="free">
+      <div><div class="pname">Free</div><div class="pdesc">50 prompts / 4 days per model, VITO 0.5 unlimited</div></div>
+      <div class="pprice">$0</div>
+    </div>
+    <div class="plan-row" data-plan="lite">
+      <div><div class="pname">Lite</div><div class="pdesc">Unlimited prompts on every model</div></div>
+      <div class="pprice-wrap"><span class="pprice-old" id="oldprice-lite" hidden></span><span class="pprice" id="price-lite">$5/mo</span></div>
+    </div>
+    <div class="plan-row" data-plan="pro">
+      <div><div class="pname">Pro</div><div class="pdesc">Unlimited prompts, priority speed</div></div>
+      <div class="pprice-wrap"><span class="pprice-old" id="oldprice-pro" hidden></span><span class="pprice" id="price-pro">$10/mo</span></div>
+    </div>
+    <div class="plan-row featured" data-plan="max">
+      <div><div class="pname">Max</div><div class="pdesc">Unlimited prompts, priority speed, early access to new models</div></div>
+      <div class="pprice-wrap"><span class="pprice-old" id="oldprice-max" hidden></span><span class="pprice" id="price-max">$15/mo</span></div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+(function(){
+  const chatLog = document.getElementById('chatLog');
+  const hero = document.getElementById('hero');
+  const input = document.getElementById('input');
+  const sendVoiceBtn = document.getElementById('sendVoiceBtn');
+  const sendVoiceIcon = document.getElementById('sendVoiceIcon');
+  const micBtn = document.getElementById('micBtn');
+  const attachBtn = document.getElementById('attachBtn');
+  const fileInput = document.getElementById('fileInput');
+  const attachmentZone = document.getElementById('attachmentZone');
+  const quickActions = document.getElementById('quickActions');
+  const voiceBanner = document.getElementById('voiceBanner');
+  const closeBannerBtn = document.getElementById('closeBannerBtn');
+  const startVoiceBtn = document.getElementById('startVoiceBtn');
+  const newChatBtn = document.getElementById('newChatBtn');
+  const upgradeBtn = document.getElementById('upgradeBtn');
+  const upgradeModal = document.getElementById('upgradeModal');
+  const closeModalBtn = document.getElementById('closeModalBtn');
+  const voiceOverlay = document.getElementById('voiceOverlay');
+  const voiceOrb = document.getElementById('voiceOrb');
+  const voiceStatus = document.getElementById('voiceStatus');
+  const voiceTranscript = document.getElementById('voiceTranscript');
+  const voiceStopBtn = document.getElementById('voiceStopBtn');
+
+  const ICON_SEND = '<path d="M4 12h3M9 6v12M13 4v16M17 8v8M20 10v4"/>'; // placeholder replaced below
+  const ICON_WAVE = '<path d="M4 12h3M9 6v12M13 4v16M17 8v8M20 10v4"/>';
+  const ICON_ARROW = '<path d="M12 19V5M5 12l7-7 7 7"/>';
+
+  let history = []; // {role, content: string | array}
+  let pendingAttachment = null; // {kind:'image'|'text', ...}
+  let composerMode = 'chat'; // 'chat' | 'image'
+  let chatStarted = false;
+
+  const BASE_PROMPT = "You are Kanairo AI, built to handle serious complexity: multi-step reasoning, technical analysis, real codebases, dense research, and high-stakes work most models fumble. You are direct, sharp, and quietly confident — no filler, no hedging for the sake of it. Think through hard problems carefully and show your work when it matters. Answer helpfully and clearly.";
+
+  // Converts this app's internal message history (Anthropic-style content blocks)
+  // into OpenAI Chat Completions format: a leading system message, plus
+  // image blocks reshaped from {type:'image', source:{...}} to {type:'image_url', image_url:{...}}.
+  function toOpenAIMessages(systemPrompt){
+    const out = [{ role: 'system', content: systemPrompt }];
+    history.forEach(function(m){
+      if (typeof m.content === 'string'){
+        out.push({ role: m.role, content: m.content });
+        return;
+      }
+      const parts = m.content.map(function(block){
+        if (block.type === 'image'){
+          return { type: 'image_url', image_url: { url: 'data:' + block.source.media_type + ';base64,' + block.source.data } };
+        }
+        return { type: 'text', text: block.text };
+      });
+      out.push({ role: m.role, content: parts });
+    });
+    return out;
+  }
+
+  const MODELS = {
+    vito05: {
+      label: 'VITO 0.5',
+      apiModel: 'gpt-4o-mini',
+      max_tokens: 350,
+      unlimited: true,
+      promptSuffix: " This is VITO 0.5: the lightest, fastest model in the lineup. Keep answers short, casual, and no-frills.",
+      theme: { accent: '#8FBBB3', deep: '#6FA098', rgb: '143,187,179' }
+    },
+    vito1: {
+      label: 'VITO 1',
+      apiModel: 'gpt-4o-mini',
+      max_tokens: 700,
+      unlimited: false,
+      promptSuffix: " This is VITO 1: balanced, everyday answers with a bit more detail than 0.5.",
+      theme: { accent: '#8CA3C4', deep: '#6E86A8', rgb: '140,163,196' }
+    },
+    vito2: {
+      label: 'VITO 2',
+      apiModel: 'gpt-4o-mini',
+      max_tokens: 1100,
+      unlimited: false,
+      promptSuffix: " This is VITO 2: the strongest model in the VITO line — clear, well-organized, dependable answers.",
+      theme: { accent: '#D9B27C', deep: '#B8935E', rgb: '217,178,124' }
+    },
+    raptor05: {
+      label: 'RAPTOR 0.5',
+      apiModel: 'gpt-4o',
+      max_tokens: 1600,
+      unlimited: false,
+      promptSuffix: " This is RAPTOR 0.5: serious reasoning power for harder problems — real analytical depth on code and analysis.",
+      theme: { accent: '#C97A5C', deep: '#A85F44', rgb: '201,122,92' }
+    },
+    raptor1: {
+      label: 'RAPTOR 1',
+      apiModel: 'gpt-4o',
+      max_tokens: 2400,
+      unlimited: false,
+      flagship: true,
+      promptSuffix: " This is RAPTOR 1, Kanairo's flagship model. Handle the hardest, highest-stakes work with full analytical depth — rigorous on code, technical analysis, and long-form output, without padding or filler.",
+      theme: { accent: '#B5556B', deep: '#8F435A', rgb: '181,85,107' }
+    }
+  };
+  let currentModelKey = 'raptor1';
+
+  function activeModel(){ return MODELS[currentModelKey]; }
+  function systemPromptFor(){ return BASE_PROMPT + activeModel().promptSuffix; }
+
+  // ---------- plans & usage quota ----------
+  let plan = 'free'; // 'free' | 'lite' | 'pro' | 'max'
+  let quotaUsed = 0;
+  let quotaWindowStart = null;
+  const QUOTA_LIMIT = 50;
+  const QUOTA_WINDOW_MS = 4 * 24 * 60 * 60 * 1000;
+  const PLAN_LABELS = { free: 'Upgrade', lite: 'Lite Plan', pro: 'Pro Plan', max: 'Max Plan' };
+  const PLAN_PRICES = { lite: 5, pro: 10, max: 15 };
+
+  // ---------- real payments (Stripe Payment Links) ----------
+  // Paste your own Stripe Payment Link URLs below to make these buttons charge real money.
+  // Create one Product + Price per plan in the Stripe Dashboard, then a Payment Link for each.
+  // For the weekend links, create a second Price on the same product at 25% off and link that.
+  // In each Payment Link's "After payment" settings, set the confirmation page to redirect to:
+  //   <your published URL>?kanairo_plan=lite&paid=1   (swap "lite" for pro / max on those links)
+  // Until a URL is pasted in below, the button will tell you it isn't configured yet —
+  // it will NOT unlock the plan for free.
+  const STRIPE_LINKS = {
+    lite: { regular: '', weekend: '' },
+    pro:  { regular: '', weekend: '' },
+    max:  { regular: '', weekend: '' }
+  };
+
+  function isWeekend(){
+    const day = new Date().getDay();
+    return day === 0 || day === 6;
+  }
+
+  function formatPrice(n){
+    return '$' + (Number.isInteger(n) ? n : n.toFixed(2));
+  }
+
+  function priceFor(key){
+    const base = PLAN_PRICES[key];
+    return isWeekend() ? Math.round(base * 0.75 * 100) / 100 : base;
+  }
+
+  function startCheckout(key){
+    const links = STRIPE_LINKS[key];
+    const url = isWeekend() ? links.weekend : links.regular;
+    if (!url){
+      renderNoticeInline("The " + PLAN_LABELS[key] + " checkout isn't connected to Stripe yet — add a Payment Link URL in STRIPE_LINKS in the code to accept real payment here.");
+      return;
+    }
+    window.location.href = url;
+  }
+
+  function checkForCheckoutReturn(){
+    const params = new URLSearchParams(window.location.search);
+    const returnedPlan = params.get('kanairo_plan');
+    const paid = params.get('paid');
+    if (returnedPlan && paid === '1' && PLAN_LABELS[returnedPlan]){
+      setPlan(returnedPlan);
+      renderNoticeInline("Payment confirmed — you're on the " + PLAN_LABELS[returnedPlan] + " now.");
+      const cleanUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+  }
+
+
+  function resetQuotaIfExpired(){
+    const now = Date.now();
+    if (!quotaWindowStart){ quotaWindowStart = now; return; }
+    if (now - quotaWindowStart > QUOTA_WINDOW_MS){
+      quotaWindowStart = now;
+      quotaUsed = 0;
+    }
+  }
+
+  function hasUnlimitedAccess(){
+    return activeModel().unlimited || plan !== 'free';
+  }
+
+  function quotaRemaining(){
+    resetQuotaIfExpired();
+    return Math.max(0, QUOTA_LIMIT - quotaUsed);
+  }
+
+  function quotaLabel(){
+    if (hasUnlimitedAccess()) return activeModel().unlimited ? '∞ prompts' : 'Unlimited';
+    return quotaRemaining() + '/' + QUOTA_LIMIT + ' · 4d';
+  }
+
+  function registerUsage(){
+    if (hasUnlimitedAccess()) return;
+    resetQuotaIfExpired();
+    quotaUsed++;
+  }
+
+  function applyTheme(key){
+    const t = MODELS[key].theme;
+    const root = document.documentElement.style;
+    root.setProperty('--accent', t.accent);
+    root.setProperty('--accent-deep', t.deep);
+    root.setProperty('--accent-rgb', t.rgb);
+  }
+
+  function activateChat(){
+    if (chatStarted) return;
+    chatStarted = true;
+    document.body.classList.add('chat-active');
+  }
+
+  function scrollToBottom(){
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  function renderUserMessage(text, attachment){
+    const div = document.createElement('div');
+    div.className = 'msg user';
+    if (attachment && attachment.kind === 'image'){
+      const img = document.createElement('img');
+      img.className = 'att-img';
+      img.src = 'data:' + attachment.media_type + ';base64,' + attachment.data;
+      div.appendChild(img);
+    } else if (attachment && attachment.kind === 'text'){
+      const tag = document.createElement('div');
+      tag.className = 'msg-attachment';
+      tag.textContent = '📎 ' + attachment.name;
+      div.appendChild(tag);
+    }
+    const textNode = document.createElement('div');
+    textNode.textContent = text;
+    div.appendChild(textNode);
+    chatLog.appendChild(div);
+    scrollToBottom();
+  }
+
+  const LOGO_SVG = '<svg viewBox="0 0 24 24" width="100%" height="100%"><rect width="24" height="24" rx="6" fill="#E8A33D"/><line x1="7" y1="4" x2="7" y2="20" stroke="#0E0E10" stroke-width="2.4" stroke-linecap="round"/><line x1="7" y1="12" x2="18" y2="4" stroke="#0E0E10" stroke-width="2.4" stroke-linecap="round"/><line x1="7" y1="12" x2="18" y2="20" stroke="#0E0E10" stroke-width="2.4" stroke-linecap="round"/></svg>';
+  const COPY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
+  const CHECK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+
+  function makeAvatar(){
+    const av = document.createElement('div');
+    av.className = 'msg-avatar';
+    av.innerHTML = LOGO_SVG;
+    return av;
+  }
+
+  function renderTypingIndicator(){
+    const row = document.createElement('div');
+    row.className = 'msg-row';
+    row.id = 'typingIndicator';
+    const bubble = document.createElement('div');
+    bubble.className = 'msg typing';
+    bubble.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+    row.appendChild(makeAvatar());
+    row.appendChild(bubble);
+    chatLog.appendChild(row);
+    scrollToBottom();
+    return row;
+  }
+
+  function copyToClipboard(text, btn){
+    function done(){
+      const original = btn.innerHTML;
+      btn.innerHTML = CHECK_ICON + '<span>Copied</span>';
+      btn.classList.add('copied');
+      setTimeout(function(){ btn.innerHTML = original; btn.classList.remove('copied'); }, 1600);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done).catch(function(){ fallbackCopy(text, done); });
+    } else {
+      fallbackCopy(text, done);
+    }
+  }
+
+  function fallbackCopy(text, cb){
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch(e){}
+    document.body.removeChild(ta);
+    cb();
+  }
+
+  function buildCodeBlock(lang, code){
+    const wrap = document.createElement('div');
+    wrap.className = 'code-block';
+    const head = document.createElement('div');
+    head.className = 'code-block-head';
+    const langTag = document.createElement('span');
+    langTag.className = 'code-lang';
+    langTag.textContent = lang || 'code';
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'copy-btn';
+    copyBtn.innerHTML = COPY_ICON + '<span>Copy</span>';
+    copyBtn.addEventListener('click', function(){ copyToClipboard(code, copyBtn); });
+    head.appendChild(langTag);
+    head.appendChild(copyBtn);
+    const pre = document.createElement('pre');
+    const codeEl = document.createElement('code');
+    codeEl.textContent = code;
+    pre.appendChild(codeEl);
+    wrap.appendChild(head);
+    wrap.appendChild(pre);
+    return wrap;
+  }
+
+  function appendFormattedContent(container, text){
+    const fenceRegex = /```(\w*)\n?([\s\S]*?)```/g;
+    let lastIndex = 0;
+    let match;
+    let found = false;
+    while ((match = fenceRegex.exec(text)) !== null){
+      if (match.index > lastIndex){
+        const plain = text.slice(lastIndex, match.index).trim();
+        if (plain){
+          const p = document.createElement('div');
+          p.className = 'msg-text';
+          p.textContent = plain;
+          container.appendChild(p);
+        }
+      }
+      const lang = match[1];
+      const code = match[2].replace(/^\n/, '').replace(/\n$/, '');
+      container.appendChild(buildCodeBlock(lang, code));
+      found = true;
+      lastIndex = fenceRegex.lastIndex;
+    }
+    const rest = text.slice(lastIndex);
+    if (rest.trim() || !found){
+      const p = document.createElement('div');
+      p.className = 'msg-text';
+      p.textContent = found ? rest.trim() : text;
+      container.appendChild(p);
+    }
+  }
+
+  function renderAssistantMessage(text){
+    const existing = document.getElementById('typingIndicator');
+    if (existing) existing.remove();
+    const row = document.createElement('div');
+    row.className = 'msg-row';
+    const bubble = document.createElement('div');
+    bubble.className = 'msg assistant';
+    appendFormattedContent(bubble, text);
+    row.appendChild(makeAvatar());
+    row.appendChild(bubble);
+    chatLog.appendChild(row);
+    scrollToBottom();
+  }
+
+  function renderAssistantStreamStart(){
+    const row = document.createElement('div');
+    row.className = 'msg-row';
+    const bubble = document.createElement('div');
+    bubble.className = 'msg assistant';
+    const typingWrap = document.createElement('div');
+    typingWrap.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+    typingWrap.style.display = 'flex';
+    typingWrap.style.gap = '5px';
+    const textEl = document.createElement('div');
+    textEl.className = 'msg-text';
+    textEl.style.display = 'none';
+    bubble.appendChild(typingWrap);
+    bubble.appendChild(textEl);
+    row.appendChild(makeAvatar());
+    row.appendChild(bubble);
+    chatLog.appendChild(row);
+    scrollToBottom();
+    return { row: row, bubble: bubble, textEl: textEl, typingWrap: typingWrap };
+  }
+
+  function streamAppend(streamRow, fullText){
+    if (fullText && streamRow.typingWrap.style.display !== 'none'){
+      streamRow.typingWrap.style.display = 'none';
+      streamRow.textEl.style.display = 'block';
+    }
+    streamRow.textEl.textContent = fullText;
+    scrollToBottom();
+  }
+
+  function finalizeStreamedMessage(streamRow, text){
+    streamRow.bubble.innerHTML = '';
+    appendFormattedContent(streamRow.bubble, text);
+    scrollToBottom();
+  }
+
+  async function callKanairo(){
+    const streamRow = renderAssistantStreamStart();
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: activeModel().apiModel,
+          max_tokens: activeModel().max_tokens,
+          messages: toOpenAIMessages(systemPromptFor())
+        })
+      });
+
+      let data = null;
+      try { data = await response.json(); } catch(parseErr){ data = null; }
+
+      if (!response.ok){
+        const apiMsg = data && data.error && data.error.message ? data.error.message : ('HTTP ' + response.status);
+        finalizeStreamedMessage(streamRow, "Kanairo hit an error talking to the model (" + apiMsg + "). Try again in a moment.");
+        return;
+      }
+
+      const text = data && data.choices && data.choices[0] && data.choices[0].message
+        ? data.choices[0].message.content
+        : '';
+
+      finalizeStreamedMessage(streamRow, text || "…");
+      history.push({ role: 'assistant', content: text || "…" });
+    } catch (err){
+      finalizeStreamedMessage(streamRow, "Kanairo couldn't reach the network just now — check your connection and try again.");
+    }
+  }
+
+  function clearAttachmentUI(){
+    attachmentZone.innerHTML = '';
+    pendingAttachment = null;
+  }
+
+  function renderImageGenerating(prompt){
+    const row = document.createElement('div');
+    row.className = 'msg-row';
+    row.id = 'imageGenRow';
+    const bubble = document.createElement('div');
+    bubble.className = 'msg assistant';
+    const wrap = document.createElement('div');
+    wrap.className = 'img-skeleton';
+    wrap.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+    bubble.appendChild(wrap);
+    row.appendChild(makeAvatar());
+    row.appendChild(bubble);
+    chatLog.appendChild(row);
+    scrollToBottom();
+
+    const seed = Math.floor(Math.random() * 1000000);
+    const url = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt) + '?width=768&height=768&nologo=true&seed=' + seed;
+    const img = new Image();
+    img.onload = function(){
+      const existingRow = document.getElementById('imageGenRow');
+      if (existingRow) existingRow.remove();
+      const doneRow = document.createElement('div');
+      doneRow.className = 'msg-row';
+      const doneBubble = document.createElement('div');
+      doneBubble.className = 'msg assistant';
+      const imageEl = document.createElement('img');
+      imageEl.className = 'gen-image';
+      imageEl.src = url;
+      imageEl.alt = prompt;
+      doneBubble.appendChild(imageEl);
+      const caption = document.createElement('div');
+      caption.className = 'msg-text gen-caption';
+      caption.textContent = prompt;
+      doneBubble.appendChild(caption);
+      doneRow.appendChild(makeAvatar());
+      doneRow.appendChild(doneBubble);
+      chatLog.appendChild(doneRow);
+      history.push({ role: 'user', content: 'Generate an image of: ' + prompt });
+      history.push({ role: 'assistant', content: '[Generated an image of: ' + prompt + ']' });
+      scrollToBottom();
+    };
+    img.onerror = function(){
+      const existingRow = document.getElementById('imageGenRow');
+      if (existingRow) existingRow.remove();
+      renderNoticeInline("Kanairo couldn't generate that image just now. Try a different description.");
+    };
+    img.src = url;
+  }
+
+  function sendMessage(){
+    const text = input.value.trim();
+    if (!text) return;
+    activateChat();
+
+    if (composerMode === 'image'){
+      renderUserMessage(text, null);
+      input.value = '';
+      autoResize();
+      composerMode = 'chat';
+      input.placeholder = 'Ask anything';
+      updateSendIcon();
+      renderImageGenerating(text);
+      return;
+    }
+
+    if (!hasUnlimitedAccess() && quotaRemaining() <= 0){
+      renderNoticeInline(MODELS[currentModelKey].label + " is out of free prompts for this 4-day window. Switch to VITO 0.5 (always unlimited) or grab a plan for unlimited access on every model.");
+      return;
+    }
+
+    let userContent;
+    let attForRender = pendingAttachment;
+
+    if (pendingAttachment && pendingAttachment.kind === 'image'){
+      userContent = [
+        { type: 'image', source: { type: 'base64', media_type: pendingAttachment.media_type, data: pendingAttachment.data } },
+        { type: 'text', text: text }
+      ];
+    } else if (pendingAttachment && pendingAttachment.kind === 'text'){
+      userContent = "Attached file \"" + pendingAttachment.name + "\":\n\n" + pendingAttachment.content + "\n\n---\n\n" + text;
+    } else {
+      userContent = text;
+    }
+
+    renderUserMessage(text, attForRender);
+    history.push({ role: 'user', content: userContent });
+
+    input.value = '';
+    autoResize();
+    clearAttachmentUI();
+    registerUsage();
+    refreshQuotaUI();
+    callKanairo();
+  }
+
+  function autoResize(){
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+  }
+
+  function updateSendIcon(){
+    if (input.value.trim().length > 0){
+      sendVoiceIcon.innerHTML = ICON_ARROW;
+      sendVoiceBtn.title = 'Send';
+    } else {
+      sendVoiceIcon.innerHTML = ICON_WAVE;
+      sendVoiceBtn.title = 'Start voice';
+    }
+  }
+
+  input.addEventListener('input', function(){ autoResize(); updateSendIcon(); });
+  input.addEventListener('keydown', function(e){
+    if (e.key === 'Enter' && !e.shiftKey){
+      e.preventDefault();
+      sendMessage();
+      updateSendIcon();
+    }
+  });
+
+  sendVoiceBtn.addEventListener('click', function(){
+    if (input.value.trim().length > 0){
+      sendMessage();
+      updateSendIcon();
+    } else {
+      startVoiceMode();
+    }
+  });
+
+  // ---------- quick actions ----------
+  quickActions.querySelectorAll('.quick-action').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      const mode = btn.getAttribute('data-mode');
+      if (mode === 'image'){
+        composerMode = 'image';
+        input.value = '';
+        input.placeholder = 'Describe the image you want…';
+      } else if (mode === 'video'){
+        activateChat();
+        renderNoticeInline("Video generation isn't wired up yet — it needs a connected video-generation API, which this build doesn't have. Image generation works though, if that helps.");
+        return;
+      } else {
+        composerMode = 'chat';
+        input.placeholder = 'Ask anything';
+        input.value = btn.getAttribute('data-prompt');
+      }
+      autoResize();
+      updateSendIcon();
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+    });
+  });
+
+  // ---------- attachments ----------
+  attachBtn.addEventListener('click', function(){ fileInput.click(); });
+  fileInput.addEventListener('change', function(){
+    const file = fileInput.files[0];
+    if (!file) return;
+    if (file.type.startsWith('image/')){
+      const reader = new FileReader();
+      reader.onload = function(){
+        const base64 = reader.result.split(',')[1];
+        pendingAttachment = { kind: 'image', media_type: file.type, data: base64, name: file.name };
+        showAttachmentChip(file.name);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = function(){
+        pendingAttachment = { kind: 'text', content: reader.result, name: file.name };
+        showAttachmentChip(file.name);
+      };
+      reader.readAsText(file);
+    }
+    fileInput.value = '';
+  });
+
+  function showAttachmentChip(name){
+    attachmentZone.innerHTML = '';
+    const chip = document.createElement('div');
+    chip.className = 'attachment-chip';
+    const label = document.createElement('span');
+    label.textContent = '📎 ' + name;
+    const removeBtn = document.createElement('button');
+    removeBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+    removeBtn.addEventListener('click', clearAttachmentUI);
+    chip.appendChild(label);
+    chip.appendChild(removeBtn);
+    attachmentZone.appendChild(chip);
+  }
+
+  // ---------- speech recognition (dictation) ----------
+  const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let dictationRecognizer = null;
+  let isDictating = false;
+
+  micBtn.addEventListener('click', function(){
+    if (!SpeechRecognitionAPI){
+      renderNoticeInline("Voice dictation isn't supported in this browser. Try Chrome or Edge.");
+      return;
+    }
+    if (isDictating){
+      dictationRecognizer.stop();
+      return;
+    }
+    dictationRecognizer = new SpeechRecognitionAPI();
+    dictationRecognizer.lang = 'en-US';
+    dictationRecognizer.interimResults = false;
+    dictationRecognizer.maxAlternatives = 1;
+
+    dictationRecognizer.onstart = function(){
+      isDictating = true;
+      micBtn.classList.add('listening');
+    };
+    dictationRecognizer.onresult = function(e){
+      const transcript = e.results[0][0].transcript;
+      input.value = (input.value ? input.value + ' ' : '') + transcript;
+      autoResize();
+      updateSendIcon();
+    };
+    dictationRecognizer.onerror = function(e){
+      isDictating = false;
+      micBtn.classList.remove('listening');
+      if (e && (e.error === 'not-allowed' || e.error === 'service-not-allowed')){
+        renderNoticeInline("Kanairo can't access the microphone here — this preview likely doesn't have mic permission. Download the file and open it directly in your browser to use voice.");
+      } else if (e && e.error === 'audio-capture'){
+        renderNoticeInline("No microphone was found. Check that one is connected and try again.");
+      }
+    };
+    dictationRecognizer.onend = function(){
+      isDictating = false;
+      micBtn.classList.remove('listening');
+    };
+    try {
+      dictationRecognizer.start();
+    } catch (err){
+      isDictating = false;
+      micBtn.classList.remove('listening');
+      renderNoticeInline("Kanairo couldn't start the microphone here — this preview may not have mic permission. Download the file and open it directly in your browser to use voice.");
+    }
+  });
+
+  function renderNoticeInline(text){
+    activateChat();
+    const row = document.createElement('div');
+    row.className = 'msg-row';
+    const bubble = document.createElement('div');
+    bubble.className = 'msg assistant';
+    bubble.textContent = text;
+    row.appendChild(makeAvatar());
+    row.appendChild(bubble);
+    chatLog.appendChild(row);
+    scrollToBottom();
+  }
+
+  // ---------- voice mode (full conversation loop) ----------
+  let voiceRecognizer = null;
+  let voiceModeActive = false;
+
+  function startVoiceMode(){
+    if (!SpeechRecognitionAPI){
+      renderNoticeInline("Voice mode isn't supported in this browser. Try Chrome or Edge.");
+      return;
+    }
+    voiceModeActive = true;
+    voiceOverlay.hidden = false;
+    voiceTranscript.textContent = '';
+    listenOnce();
+  }
+
+  function endVoiceMode(){
+    voiceModeActive = false;
+    voiceOverlay.hidden = true;
+    if (voiceRecognizer){ try { voiceRecognizer.stop(); } catch(e){} }
+    window.speechSynthesis.cancel();
+  }
+
+  function listenOnce(){
+    if (!voiceModeActive) return;
+    voiceStatus.textContent = 'Listening…';
+    voiceOrb.classList.add('listening');
+    voiceRecognizer = new SpeechRecognitionAPI();
+    voiceRecognizer.lang = 'en-US';
+    voiceRecognizer.interimResults = false;
+    voiceRecognizer.maxAlternatives = 1;
+
+    voiceRecognizer.onresult = function(e){
+      const transcript = e.results[0][0].transcript;
+      voiceTranscript.textContent = transcript;
+      voiceOrb.classList.remove('listening');
+      voiceStatus.textContent = 'Kanairo is thinking…';
+      handleVoiceTurn(transcript);
+    };
+    voiceRecognizer.onerror = function(e){
+      voiceOrb.classList.remove('listening');
+      const code = e && e.error;
+      if (code === 'not-allowed' || code === 'service-not-allowed' || code === 'audio-capture'){
+        const msg = code === 'audio-capture'
+          ? "No microphone was found. Check that one is connected and try again."
+          : "Kanairo can't access the microphone here — this preview likely doesn't have mic permission. Download the file and open it directly in your browser to use voice.";
+        endVoiceMode();
+        renderNoticeInline(msg);
+        return;
+      }
+      if (voiceModeActive){
+        voiceStatus.textContent = "Didn't catch that.";
+        setTimeout(function(){ if (voiceModeActive) listenOnce(); }, 900);
+      }
+    };
+    voiceRecognizer.onend = function(){};
+    try {
+      voiceRecognizer.start();
+    } catch (err){
+      voiceOrb.classList.remove('listening');
+      endVoiceMode();
+      renderNoticeInline("Kanairo couldn't start the microphone here — this preview may not have mic permission. Download the file and open it directly in your browser to use voice.");
+    }
+  }
+
+  async function handleVoiceTurn(transcript){
+    activateChat();
+    renderUserMessage(transcript, null);
+    history.push({ role: 'user', content: transcript });
+    renderTypingIndicator();
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: activeModel().apiModel,
+          max_tokens: Math.min(activeModel().max_tokens, 600),
+          messages: toOpenAIMessages(systemPromptFor() + " You are speaking out loud in a voice conversation, so keep answers brief and natural to hear.")
+        })
+      });
+      let data = null;
+      try { data = await response.json(); } catch(parseErr){ data = null; }
+      if (!response.ok){
+        const apiMsg = data && data.error && data.error.message ? data.error.message : ('HTTP ' + response.status);
+        renderAssistantMessage("Kanairo hit an error (" + apiMsg + "). Try again.");
+        if (voiceModeActive) setTimeout(function(){ if (voiceModeActive) listenOnce(); }, 1200);
+        return;
+      }
+      const text = data && data.choices && data.choices[0] && data.choices[0].message
+        ? data.choices[0].message.content
+        : "Sorry, I lost my train of thought.";
+      history.push({ role: 'assistant', content: text });
+      renderAssistantMessage(text);
+
+      if (voiceModeActive){
+        voiceStatus.textContent = 'Kanairo is speaking…';
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.onend = function(){
+          if (voiceModeActive) listenOnce();
+        };
+        window.speechSynthesis.speak(utter);
+      }
+    } catch(err){
+      renderAssistantMessage("Kanairo couldn't reach the network just now.");
+      if (voiceModeActive) setTimeout(function(){ if (voiceModeActive) listenOnce(); }, 1200);
+    }
+  }
+
+  voiceStopBtn.addEventListener('click', endVoiceMode);
+  startVoiceBtn.addEventListener('click', startVoiceMode);
+
+  // ---------- banner dismiss ----------
+  closeBannerBtn.addEventListener('click', function(){
+    voiceBanner.style.display = 'none';
+  });
+
+  // ---------- new chat ----------
+  newChatBtn.addEventListener('click', function(){
+    history = [];
+    chatLog.innerHTML = '';
+    chatStarted = false;
+    document.body.classList.remove('chat-active');
+    voiceBanner.style.display = '';
+    clearAttachmentUI();
+    input.value = '';
+    autoResize();
+    updateSendIcon();
+  });
+
+  // ---------- upgrade / plans modal ----------
+  const upgradeLabel = document.getElementById('upgradeLabel');
+
+  function setPlan(key){
+    plan = key;
+    upgradeLabel.textContent = PLAN_LABELS[key];
+    document.querySelectorAll('.plan-row').forEach(function(row){
+      row.classList.toggle('active-plan', row.getAttribute('data-plan') === key);
+    });
+    refreshQuotaUI();
+  }
+
+  upgradeBtn.addEventListener('click', function(){ upgradeModal.hidden = false; });
+  closeModalBtn.addEventListener('click', function(){ upgradeModal.hidden = true; });
+  upgradeModal.addEventListener('click', function(e){
+    if (e.target === upgradeModal) upgradeModal.hidden = true;
+  });
+  document.querySelectorAll('.plan-row').forEach(function(row){
+    row.style.cursor = 'pointer';
+    row.addEventListener('click', function(){
+      const key = row.getAttribute('data-plan');
+      if (!key) return;
+      if (key === 'free'){
+        setPlan('free');
+        upgradeModal.hidden = true;
+        renderNoticeInline("You're back on the Free plan — 50 prompts / 4 days per model, VITO 0.5 stays unlimited.");
+        return;
+      }
+      startCheckout(key);
+    });
+  });
+
+  // ---------- model switcher ----------
+  const modelSwitchBtn = document.getElementById('modelSwitchBtn');
+  const modelDropdown = document.getElementById('modelDropdown');
+  const modelTag = document.getElementById('modelTag');
+  const quotaTag = document.getElementById('quotaTag');
+  const heroModelName = document.getElementById('heroModelName');
+  const dropdownUpgradeLink = document.getElementById('dropdownUpgradeLink');
+
+  function refreshQuotaUI(){
+    quotaTag.textContent = quotaLabel();
+  }
+
+  function setModel(key){
+    currentModelKey = key;
+    applyTheme(key);
+    modelTag.textContent = MODELS[key].label;
+    heroModelName.textContent = MODELS[key].label;
+    document.querySelectorAll('.model-option').forEach(function(opt){
+      opt.classList.toggle('active', opt.getAttribute('data-model') === key);
+    });
+    refreshQuotaUI();
+  }
+
+  modelSwitchBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    const isHidden = modelDropdown.hidden;
+    modelDropdown.hidden = !isHidden;
+    modelSwitchBtn.setAttribute('aria-expanded', String(isHidden));
+  });
+  document.addEventListener('click', function(e){
+    if (!modelDropdown.hidden && !modelDropdown.contains(e.target) && e.target !== modelSwitchBtn){
+      modelDropdown.hidden = true;
+      modelSwitchBtn.setAttribute('aria-expanded', 'false');
+    }
+  });
+  document.querySelectorAll('.model-option').forEach(function(opt){
+    opt.addEventListener('click', function(){
+      setModel(opt.getAttribute('data-model'));
+      modelDropdown.hidden = true;
+      modelSwitchBtn.setAttribute('aria-expanded', 'false');
+    });
+  });
+  if (dropdownUpgradeLink){
+    dropdownUpgradeLink.addEventListener('click', function(e){
+      e.stopPropagation();
+      modelDropdown.hidden = true;
+      upgradeModal.hidden = false;
+    });
+  }
+
+  function updatePricingUI(){
+    const weekend = isWeekend();
+    const banner = document.getElementById('weekendBanner');
+    if (banner) banner.hidden = !weekend;
+    ['lite', 'pro', 'max'].forEach(function(key){
+      const priceEl = document.getElementById('price-' + key);
+      const oldEl = document.getElementById('oldprice-' + key);
+      if (!priceEl) return;
+      if (weekend){
+        priceEl.textContent = formatPrice(priceFor(key)) + '/mo';
+        if (oldEl){ oldEl.hidden = false; oldEl.textContent = formatPrice(PLAN_PRICES[key]) + '/mo'; }
+      } else {
+        priceEl.textContent = formatPrice(PLAN_PRICES[key]) + '/mo';
+        if (oldEl){ oldEl.hidden = true; }
+      }
+    });
+  }
+
+  setModel('raptor1');
+  setPlan('free');
+  updatePricingUI();
+  checkForCheckoutReturn();
+  updateSendIcon();
+})();
+</script>
+
+</body>
+</html>
