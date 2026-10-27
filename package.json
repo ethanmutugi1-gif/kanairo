@@ -1,0 +1,9 @@
+{
+  "name": "kanairo",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@google/genai": "^2.31.0",
+    "openai": "^7.45.1"
+  }
+}

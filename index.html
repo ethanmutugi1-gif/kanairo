@@ -993,36 +993,46 @@
     scrollToBottom();
   }
 
+  // Streams an answer from /api/chat (newline-delimited JSON events).
+  async function streamChat(voice, onText){
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model: currentModelKey, messages: history, voice: voice })
+    });
+    if (!response.ok || !response.body){
+      let data = null;
+      try { data = await response.json(); } catch(e){}
+      throw new Error(data && data.error && data.error.message ? data.error.message : ('HTTP ' + response.status));
+    }
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '', text = '', errMsg = '';
+    while (true){
+      const r = await reader.read();
+      if (r.done) break;
+      buf += decoder.decode(r.value, { stream: true });
+      let nl;
+      while ((nl = buf.indexOf('\n')) >= 0){
+        const line = buf.slice(0, nl); buf = buf.slice(nl + 1);
+        if (!line.trim()) continue;
+        let ev; try { ev = JSON.parse(line); } catch(e){ continue; }
+        if (ev.t === 'x'){ text += ev.d; if (onText) onText(text); }
+        else if (ev.t === 'e'){ errMsg = ev.m; }
+      }
+    }
+    if (!text && errMsg) throw new Error(errMsg);
+    return text;
+  }
+
   async function callKanairo(){
     const streamRow = renderAssistantStreamStart();
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: activeModel().apiModel,
-          max_tokens: activeModel().max_tokens,
-          messages: toOpenAIMessages(systemPromptFor())
-        })
-      });
-
-      let data = null;
-      try { data = await response.json(); } catch(parseErr){ data = null; }
-
-      if (!response.ok){
-        const apiMsg = data && data.error && data.error.message ? data.error.message : ('HTTP ' + response.status);
-        finalizeStreamedMessage(streamRow, "Kanairo hit an error talking to the model (" + apiMsg + "). Try again in a moment.");
-        return;
-      }
-
-      const text = data && data.choices && data.choices[0] && data.choices[0].message
-        ? data.choices[0].message.content
-        : '';
-
+      const text = await streamChat(false, function(t){ streamAppend(streamRow, t); });
       finalizeStreamedMessage(streamRow, text || "…");
       history.push({ role: 'assistant', content: text || "…" });
     } catch (err){
-      finalizeStreamedMessage(streamRow, "Kanairo couldn't reach the network just now — check your connection and try again.");
+      finalizeStreamedMessage(streamRow, "Kanairo hit an error talking to the model (" + err.message + "). Try again in a moment.");
     }
   }
 
@@ -1356,26 +1366,14 @@
     renderTypingIndicator();
 
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: activeModel().apiModel,
-          max_tokens: Math.min(activeModel().max_tokens, 600),
-          messages: toOpenAIMessages(systemPromptFor() + " You are speaking out loud in a voice conversation, so keep answers brief and natural to hear.")
-        })
-      });
-      let data = null;
-      try { data = await response.json(); } catch(parseErr){ data = null; }
-      if (!response.ok){
-        const apiMsg = data && data.error && data.error.message ? data.error.message : ('HTTP ' + response.status);
-        renderAssistantMessage("Kanairo hit an error (" + apiMsg + "). Try again.");
+      let text;
+      try { text = await streamChat(true, null); }
+      catch(apiErr){
+        renderAssistantMessage("Kanairo hit an error (" + apiErr.message + "). Try again.");
         if (voiceModeActive) setTimeout(function(){ if (voiceModeActive) listenOnce(); }, 1200);
         return;
       }
-      const text = data && data.choices && data.choices[0] && data.choices[0].message
-        ? data.choices[0].message.content
-        : "Sorry, I lost my train of thought.";
+      text = text || "Sorry, I lost my train of thought.";
       history.push({ role: 'assistant', content: text });
       renderAssistantMessage(text);
 
